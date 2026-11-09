@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relevance Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+:root {
+  --bg: #f6f7f8; --panel: #ffffff; --ink: #1b2228; --muted: #5d6973; --line: #dfe3e7; --hover: #eef2f5;
+  --accent: #1f5f7a; --accent-soft: #e3eef3; --select: #f3c64b; --warn-bg: #fdf3dc; --warn-ink: #5c4510; --err: #a33b2f;
+  --g3: #1d6b45; --g3-fg: #ffffff; --g2: #6fae86; --g2-fg: #0d2617; --g1: #e7d9a8; --g1-fg: #3d3214; --g0: #e3e6e9; --g0-fg: #4f5a63;
+  --up: #1d6b45; --down: #a33b2f;
+  --r-top3: #1f5f7a; --r-top3-fg: #ffffff; --r-top10: #b9d4df; --r-top10-fg: #10303d; --r-deep: #eef2f4; --r-deep-fg: #4f5a63;
+  --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171b; --panel: #192026; --ink: #e5eaee; --muted: #9aa6af; --line: #2c363e; --hover: #222b32;
+    --accent: #7fc0d9; --accent-soft: #1d3540; --select: #c9a13a; --warn-bg: #3a3020; --warn-ink: #f1e2bd; --err: #e58a7e;
+    --g3: #3f9b6c; --g3-fg: #08160f; --g2: #2f6347; --g2-fg: #dff2e6; --g1: #5b5130; --g1-fg: #f1e7c4; --g0: #2a3238; --g0-fg: #a5b0b8;
+    --up: #6cc495; --down: #e58a7e;
+    --r-top3: #7fc0d9; --r-top3-fg: #0b1d25; --r-top10: #2b4a57; --r-top10-fg: #d6ebf3; --r-deep: #20282e; --r-deep-fg: #9aa6af;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171b; --panel: #192026; --ink: #e5eaee; --muted: #9aa6af; --line: #2c363e; --hover: #222b32;
+  --accent: #7fc0d9; --accent-soft: #1d3540; --select: #c9a13a; --warn-bg: #3a3020; --warn-ink: #f1e2bd; --err: #e58a7e;
+  --g3: #3f9b6c; --g3-fg: #08160f; --g2: #2f6347; --g2-fg: #dff2e6; --g1: #5b5130; --g1-fg: #f1e7c4; --g0: #2a3238; --g0-fg: #a5b0b8;
+  --up: #6cc495; --down: #e58a7e;
+  --r-top3: #7fc0d9; --r-top3-fg: #0b1d25; --r-top10: #2b4a57; --r-top10-fg: #d6ebf3; --r-deep: #20282e; --r-deep-fg: #9aa6af;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--body); }
+a { color: var(--accent); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; max-width: 1500px; margin: 0 auto; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-bottom: 16px; }
+header.top .ttl { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; min-width: 0; }
+header.top h1 { font: 600 1.35rem/1.2 var(--display); margin: 0; }
+header.top p { margin: 0; color: var(--muted); max-width: 70ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 6px 12px; border: 0; background: var(--panel); color: var(--muted); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+button.more { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--accent); cursor: pointer; }
+button.more:hover { background: var(--hover); }
+button.more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.warn { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; }
+.warn summary { cursor: pointer; font-weight: 600; }
+.warn ul { margin: 6px 0 0; padding-left: 18px; }
+/* landing */
+.landing { padding: 28px 24px; display: grid; gap: 16px; max-width: 760px; margin: 40px auto; }
+.landing h2 { font: 600 1.5rem/1.2 var(--display); margin: 0; }
+.landing p { margin: 0; color: var(--muted); }
+.drop { border: 2px dashed var(--line); border-radius: 10px; padding: 32px 16px; text-align: center; display: grid; gap: 10px; justify-items: center; }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.err { color: var(--err); font-weight: 500; }
+body.dragging::after { content: "Drop the JSON file to open it"; position: fixed; inset: 12px; border: 3px dashed var(--accent); border-radius: 12px; background: color-mix(in srgb, var(--bg) 85%, transparent); display: grid; place-items: center; font: 600 1.2rem var(--body); color: var(--accent); pointer-events: none; }
+/* layout */
+.layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: flex; flex-direction: column; max-height: calc(100vh - 40px); }
+@media (max-width: 860px) { .index { position: static; max-height: 360px; } }
+.controls { display: grid; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line); }
+.controls input, .controls select { width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.controls .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+label.lbl { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 2px; }
+ul.qlist { list-style: none; margin: 0; padding: 4px; overflow-y: auto; }
+ul.qlist li button { all: unset; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; width: 100%; padding: 7px 8px; border-radius: 6px; cursor: pointer; }
+ul.qlist li button:hover { background: var(--hover); }
+ul.qlist li button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+ul.qlist li button[aria-current="true"] { background: var(--accent-soft); }
+ul.qlist li.empty { padding: 10px; color: var(--muted); font-size: 13px; }
+.qtext { overflow-wrap: anywhere; font-weight: 500; }
+.qmeta { grid-column: 1; font-size: 12px; color: var(--muted); }
+.delta { grid-row: 1 / span 2; grid-column: 2; align-self: center; font: 600 12px var(--mono); font-variant-numeric: tabular-nums; }
+.delta.up { color: var(--up); } .delta.down { color: var(--down); } .delta.flat { color: var(--muted); }
+.count { padding: 8px 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+.detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
+.detail > * { min-width: 0; }
+.qhead { padding: 18px 20px; display: grid; gap: 8px; }
+.qhead h2 { font: 600 1.6rem/1.2 var(--display); margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--hover); color: var(--muted); }
+.qhead .desc { margin: 0; color: var(--muted); max-width: 80ch; }
+section h3 { font: 600 11px var(--body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+.scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.score { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); display: grid; gap: 6px; }
+.score .name { font-size: 12px; color: var(--muted); }
+.score .val { font: 600 1.25rem var(--mono); font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--hover); border-radius: 3px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); }
+.scroll { overflow-x: auto; }
+.cols { display: grid; grid-template-columns: repeat(var(--ncols), minmax(185px, 1fr)); gap: 10px; min-width: calc(var(--ncols) * 195px); }
+.role { font-weight: 500; font-size: 11px; color: var(--accent); }
+.overview { padding: 14px 16px; margin-bottom: 20px; }
+.overview summary { cursor: pointer; font: 600 11px var(--body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.overview summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.overview .body { display: grid; gap: 12px; margin-top: 12px; }
+table.ov { border-collapse: collapse; width: 100%; font-size: 13px; }
+table.ov th, table.ov td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
+table.ov th:first-child, table.ov td:first-child { text-align: left; }
+table.ov th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; vertical-align: bottom; }
+table.ov td.n { font-family: var(--mono); }
+table.ov tr.base td { background: var(--accent-soft); }
+table.ov tr.extra td { color: var(--muted); }
+table.ov td.top { font-weight: 600; color: var(--ink); }
+table.ov tr.grp td { text-align: left; font-size: 12px; color: var(--muted); padding-top: 14px; background: transparent; }
+table.ov tr.grp strong { color: var(--ink); font-weight: 600; }
+.cmp { font-family: var(--mono); font-size: 12px; }
+.cmp.up { color: var(--up); } .cmp.down { color: var(--down); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.stat { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 2px; }
+.stat .v { font: 600 1.3rem var(--mono); font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.dist { display: flex; height: 22px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+.dist span { display: grid; place-items: center; font: 600 11px var(--mono); min-width: 0; overflow: hidden; }
+.col h4 { margin: 0 0 6px; font: 600 13px var(--body); display: flex; justify-content: space-between; gap: 6px; }
+ol.ranked { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+ol.ranked li button { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 22px 24px minmax(0, 1fr); gap: 6px; align-items: start; width: 100%; min-height: 46px; padding: 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
+ol.ranked li button:hover { background: var(--hover); }
+ol.ranked li button:focus-visible { outline: 2px solid var(--accent); }
+ol.ranked li button.sel { box-shadow: 0 0 0 2px var(--select); border-color: var(--select); }
+ol.ranked li.empty { color: var(--muted); font-size: 12px; padding: 6px; }
+.rk { font: 12px var(--mono); color: var(--muted); padding-top: 2px; text-align: right; }
+.g { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 3px; border-radius: 4px; font: 600 12px var(--mono); }
+.g3 { background: var(--g3); color: var(--g3-fg); } .g2 { background: var(--g2); color: var(--g2-fg); }
+.g1 { background: var(--g1); color: var(--g1-fg); } .g0 { background: var(--g0); color: var(--g0-fg); }
+.gx { background: transparent; color: var(--muted); border: 1px dashed var(--line); }
+.t { font-size: 12.5px; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.picked { padding: 14px 16px; display: grid; gap: 6px; }
+.picked .ttl { font-weight: 600; overflow-wrap: anywhere; }
+.picked .meta { font-size: 12px; color: var(--muted); }
+.picked .why { margin: 0; max-width: 80ch; }
+.picked .ranks { display: flex; flex-wrap: wrap; gap: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); align-items: center; }
+.legend span.item { display: inline-flex; gap: 6px; align-items: center; }
+table.grid { border-collapse: collapse; width: 100%; font-size: 13px; }
+table.grid th, table.grid td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.grid th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+table.grid td.c { text-align: center; width: 92px; }
+table.grid tr[data-c] { cursor: pointer; }
+table.grid tr[data-c]:hover td { background: var(--hover); }
+table.grid tr.sel td { background: var(--accent-soft); }
+table.grid td.why { color: var(--ink); max-width: 60ch; }
+.rc { display: inline-block; min-width: 34px; padding: 1px 6px; border-radius: 4px; font: 12px var(--mono); font-variant-numeric: tabular-nums; }
+.rc.top3 { background: var(--r-top3); color: var(--r-top3-fg); font-weight: 600; }
+.rc.top10 { background: var(--r-top10); color: var(--r-top10-fg); }
+.rc.deep { background: var(--r-deep); color: var(--r-deep-fg); }
+.rc.none { color: var(--muted); }
+.cid { font: 11px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+.sechead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.sechead h3 { margin: 0; }
+.note { font-size: 12px; color: var(--muted); margin: 0; max-width: 90ch; }
+.pickcols { font-size: 12px; color: var(--muted); }
+.pickcols summary { cursor: pointer; }
+.pickcols .opts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; }
+.pickcols label { display: inline-flex; gap: 6px; align-items: center; }
+@media (prefers-reduced-motion: no-preference) { .bar span { transition: width .25s ease; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="ttl"><h1 id="h-title">Relevance Explorer</h1><p id="h-desc"></p></div>
+    <div class="actions">
+      <div class="seg" id="viewseg" role="group" aria-label="View" hidden>
+        <button type="button" data-view="judgments" aria-pressed="false">Judgments</button>
+        <button type="button" data-view="runs" aria-pressed="true">Results</button>
+      </div>
+      <button type="button" class="more" id="b-open">Open a file</button>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+    </div>
+  </header>
+  <div id="warnings"></div>
+  <section class="panel landing" id="landing" hidden>
+    <h2>Open a relevance test set</h2>
+    <p>A JSON file of test queries and graded results, with or without the ranked results from one or more search setups. The file is read in your browser and never uploaded. The README describes the format.</p>
+    <div class="drop" id="drop">
+      <div>Drop a JSON file here</div>
+      <button type="button" class="more" id="b-open2">Choose a file</button>
+    </div>
+    <p id="load-msg" role="status"></p>
+  </section>
+  <div id="app" hidden>
+    <details class="panel overview" id="ov-scores"><summary id="ov-scores-sum"></summary><div class="body" id="ov-scores-body"></div></details>
+    <details class="panel overview" id="ov-judg"><summary>About the judgments</summary><div class="body" id="ov-judg-body"></div></details>
+    <div class="layout">
+      <nav class="panel index" aria-label="Test queries">
+        <div class="controls">
+          <div><label class="lbl" for="f-text">Find a query</label><input id="f-text" type="search" placeholder="Words or query id"></div>
+          <div id="cmp-wrap"><label class="lbl" for="f-cmp">Compare</label><select id="f-cmp"></select></div>
+          <div class="row">
+            <div><label class="lbl" for="f-tag">Tag</label><select id="f-tag"></select></div>
+            <div><label class="lbl" for="f-show">Show</label><select id="f-show"></select></div>
+          </div>
+          <div class="row">
+            <div><label class="lbl" for="f-sort">Sort</label><select id="f-sort"></select></div>
+            <div id="metric-wrap"><label class="lbl" for="f-metric">Score</label><select id="f-metric"></select></div>
+          </div>
+        </div>
+        <ul class="qlist" id="qlist"></ul>
+        <div class="count" id="qcount"></div>
+      </nav>
+      <main class="detail" id="detail"></main>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="re-data"></script>
+<script>
+'use strict';
+const MOVE = 0.02; // a per-query change bigger than this counts as better or worse
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const mean = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
+const fmt2 = n => Number.isFinite(n) ? n.toFixed(2) : '–';
+const fmt3 = n => Number.isFinite(n) ? n.toFixed(3) : '–';
+const plural = (n, one, many) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+// Maps keyed by ids from the file have no prototype, so ids like "constructor" or "__proto__" are ordinary keys.
+const dict = (entries = []) => Object.assign(Object.create(null), Object.fromEntries(entries));
+
+let M = null; // the loaded data, from normalize()
+let state = {}; // what the viewer is showing; reset on each load()
+
+/* ---------- loading and checking the data ---------- */
+
+function normalize(raw) {
+  const warn = [];
+  if (!isObj(raw)) throw new Error('The file must contain a JSON object.');
+  if (!Array.isArray(raw.queries) || !raw.queries.length) throw new Error('The file needs a non-empty "queries" list.');
+
+  const queries = [], byId = dict();
+  let noId = 0, dupQ = 0;
+  raw.queries.forEach(q => {
+    const id = isObj(q) && q.id != null && String(q.id) !== '' ? String(q.id) : null;
+    if (!id) { noId++; return; }
+    if (byId[id]) { dupQ++; return; }
+    const o = { id, text: String(q.text ?? q.query ?? id), tags: Array.isArray(q.tags) ? [...new Set(q.tags.map(String))] : [],
+      description: q.description ? String(q.description) : '', meta: isObj(q.meta) ? q.meta : {}, n: queries.length };
+    queries.push(o); byId[id] = o;
+  });
+  if (noId) warn.push(`${plural(noId, 'query has', 'queries have')} no id and ${noId === 1 ? 'was' : 'were'} skipped.`);
+  if (dupQ) warn.push(`${plural(dupQ, 'query id appears', 'query ids appear')} more than once; only the first of each was kept.`);
+
+  const docs = dict(isObj(raw.docs) ? Object.entries(raw.docs) : []);
+  const J = dict(queries.map(q => [q.id, dict()]));
+  let unknownQ = 0, bad = 0, dupJ = 0;
+  (Array.isArray(raw.judgments) ? raw.judgments : []).forEach(j => {
+    if (!isObj(j)) { bad++; return; }
+    const qid = String(j.query ?? ''), did = j.doc != null ? String(j.doc) : '';
+    if (!J[qid]) { unknownQ++; return; }
+    const g = Number(j.grade);
+    if (!did || j.grade === null || j.grade === '' || !Number.isFinite(g)) { bad++; return; }
+    if (J[qid][did]) dupJ++;
+    J[qid][did] = { grade: g, judge: j.judge ? String(j.judge) : '', reason: j.reason ? String(j.reason) : '',
+      note: j.note ? String(j.note) : '', title: j.title ? String(j.title) : '' };
+  });
+  if (unknownQ) warn.push(`${plural(unknownQ, 'judgment refers', 'judgments refer')} to a query that isn't in "queries" and ${unknownQ === 1 ? 'was' : 'were'} skipped.`);
+  if (bad) warn.push(`${plural(bad, 'judgment is', 'judgments are')} missing a document id or a numeric grade and ${bad === 1 ? 'was' : 'were'} skipped.`);
+  if (dupJ) warn.push(`${plural(dupJ, 'query and document pair was', 'query and document pairs were')} graded more than once; the last grade was kept.`);
+
+  const used = new Set();
+  Object.values(J).forEach(m => Object.values(m).forEach(e => used.add(e.grade)));
+  const grades = Array.isArray(raw.grades)
+    ? raw.grades.filter(isObj).filter(g => Number.isFinite(Number(g.value))).map(g => ({ value: Number(g.value), label: String(g.label ?? g.value) }))
+    : [];
+  used.forEach(v => { if (!grades.some(g => g.value === v)) grades.push({ value: v, label: String(v) }); });
+  grades.sort((a, b) => b.value - a.value);
+  const maxGrade = Math.max(1, ...grades.map(g => g.value));
+  const relMin = Number.isFinite(raw.relevantMin) ? raw.relevantMin : null;
+  if (raw.relevantMin != null && relMin == null) warn.push('"relevantMin" must be a number; any grade above 0 counts as relevant.');
+  const isRel = g => g > 0 && (relMin == null || g >= relMin);
+
+  // tags: declared order first, then any others in order of first use
+  const tagInfo = dict(), tagOrder = [];
+  const declared = Array.isArray(raw.tags) ? raw.tags.filter(isObj).map(t => [String(t.id), t]) : isObj(raw.tags) ? Object.entries(raw.tags) : [];
+  declared.forEach(([id, t]) => { if (!tagInfo[id]) { tagInfo[id] = { label: String((isObj(t) && t.label) || id), description: isObj(t) && t.description ? String(t.description) : '' }; tagOrder.push(id); } });
+  queries.forEach(q => q.tags.forEach(t => { if (!tagInfo[t]) { tagInfo[t] = { label: t, description: '' }; tagOrder.push(t); } }));
+  const tagsUsed = tagOrder.filter(t => queries.some(q => q.tags.includes(t)));
+
+  // runs
+  const runs = [], runIds = new Set();
+  let dupRun = 0, unknownRunQ = 0;
+  (Array.isArray(raw.runs) ? raw.runs : []).filter(isObj).forEach((r, i) => {
+    let id = String(r.id ?? `run-${i + 1}`);
+    if (runIds.has(id)) { dupRun++; return; }
+    runIds.add(id);
+    const results = dict();
+    Object.entries(isObj(r.results) ? r.results : {}).forEach(([qid, list]) => {
+      if (!byId[qid]) { unknownRunQ++; return; }
+      const seen = new Set(), out = [];
+      (Array.isArray(list) ? list : []).forEach(x => {
+        const d = isObj(x) ? (x.id ?? x.doc) : x;
+        if (d == null) return;
+        const s = String(d);
+        if (!seen.has(s)) { seen.add(s); out.push(s); }
+      });
+      results[qid] = out;
+    });
+    runs.push({ id, label: String(r.label ?? id), description: r.description ? String(r.description) : '',
+      group: r.group != null ? String(r.group) : '', baseline: !!r.baseline, featured: r.featured === true, results });
+  });
+  if (dupRun) warn.push(`${plural(dupRun, 'run id appears', 'run ids appear')} more than once; only the first of each was kept.`);
+  if (unknownRunQ) warn.push(`Runs list results for ${plural(unknownRunQ, 'query', 'queries')} that ${unknownRunQ === 1 ? "isn't" : "aren't"} in "queries"; those results were skipped.`);
+  const baselines = runs.filter(r => r.baseline);
+  if (baselines.length > 1) warn.push(`More than one run is marked as the baseline; "${baselines[0].label}" is used.`);
+  const baseline = baselines[0] || null;
+  runs.forEach(r => { r.baseline = r === baseline; });
+  let featured = runs.filter(r => r.featured);
+  if (!featured.length) featured = runs.slice(0, 5);
+  if (baseline && !featured.includes(baseline)) featured = [baseline, ...featured];
+  featured = runs.filter(r => featured.includes(r)); // keep file order
+  const groups = isObj(raw.groups) ? dict(Object.entries(raw.groups).map(([g, v]) => [g, { label: String((isObj(v) && v.label) || g), note: isObj(v) && v.note ? String(v.note) : '' }])) : dict();
+
+  const kRaw = Number(raw.k);
+  const k = Number.isInteger(kRaw) && kRaw > 0 ? kRaw : 10;
+  if (raw.k != null && k !== kRaw) warn.push('"k" must be a positive whole number; 10 was used.');
+  const one = isObj(raw.unit) && raw.unit.singular ? String(raw.unit.singular) : typeof raw.unit === 'string' && raw.unit ? raw.unit : 'document';
+  const unit = { one, many: isObj(raw.unit) && raw.unit.plural ? String(raw.unit.plural) : one === 'document' ? 'documents' : one + 's' };
+
+  // per-query judgment stats
+  queries.forEach(q => {
+    const es = Object.values(J[q.id]);
+    q.nGraded = es.length;
+    q.nRel = es.filter(e => isRel(e.grade)).length;
+    q.scorable = es.some(e => e.grade > 0);
+    q.judges = dict();
+    es.forEach(e => { const w = e.judge || 'Unknown'; q.judges[w] = (q.judges[w] || 0) + 1; });
+  });
+
+  // scores
+  const S = dict();
+  runs.forEach(r => {
+    S[r.id] = dict();
+    queries.forEach(q => { if (q.scorable && r.results[q.id]) S[r.id][q.id] = scoreQuery(r.results[q.id], J[q.id], k, isRel); });
+  });
+  const scorable = queries.filter(q => q.scorable);
+  runs.forEach(r => {
+    const miss = scorable.filter(q => !r.results[q.id]).length;
+    if (miss) warn.push(`"${r.label}" has no results list for ${plural(miss, 'scored query', 'scored queries')}, so ${miss === 1 ? 'it is' : 'they are'} left out of every setup's averages. Use an empty list for a query that returned nothing.`);
+  });
+  const scored = scorable.filter(q => runs.every(r => r.results[q.id]));
+  const scoredSet = new Set(scored.map(q => q.id));
+
+  let comparisons = [];
+  const runById = dict(runs.map(r => [r.id, r]));
+  if (Array.isArray(raw.comparisons)) {
+    raw.comparisons.forEach(c => {
+      const [a, b, label] = Array.isArray(c) ? c : isObj(c) ? [c.a, c.b, c.label] : [];
+      if (runById[a] && runById[b] && a !== b) comparisons.push({ a, b, label: label ? String(label) : `${runById[a].label} vs ${runById[b].label}` });
+      else warn.push('A comparison names a run that doesn\'t exist and was skipped.');
+    });
+  }
+  if (!comparisons.length) {
+    const ref = baseline || featured[0];
+    if (ref) featured.filter(r => r !== ref).forEach(r => comparisons.push({ a: r.id, b: ref.id, label: `${r.label} vs ${ref.label}` }));
+  }
+
+  const depth = Math.max(0, ...runs.flatMap(r => Object.values(r.results).map(l => l.length)));
+  return { title: raw.title ? String(raw.title) : 'Relevance Explorer', description: raw.description ? String(raw.description) : '',
+    notes: raw.notes ? String(raw.notes) : '', unit, k, grades,
+    metrics: [ // key in scoreQuery(), per-query label, label for the average over queries
+      { key: 'ndcg', label: `NDCG@${k}`, avg: `NDCG@${k}` },
+      { key: 'ap', label: 'AP', avg: 'MAP' },
+      { key: 'rr', label: 'Reciprocal rank', avg: 'MRR' },
+    ], maxGrade, relMin, isRel, tagInfo, tagsUsed, docs, queries, byId, J,
+    runs, runById, baseline, featured, groups, comparisons, S, scored, scoredSet, depth, warn };
+}
+
+function scoreQuery(list, judged, k, isRel) {
+  const gain = d => { const e = judged[d]; return e && e.grade > 0 ? e.grade : 0; };
+  const dcg = gs => gs.slice(0, k).reduce((s, g, i) => s + g / Math.log2(i + 2), 0);
+  const ideal = Object.values(judged).map(e => e.grade).filter(g => g > 0).sort((a, b) => b - a);
+  const idcg = dcg(ideal);
+  const total = Object.values(judged).filter(e => isRel(e.grade)).length;
+  let found = 0, sum = 0, rr = 0;
+  list.forEach((d, i) => {
+    const e = judged[d];
+    if (e && isRel(e.grade)) { found++; sum += found / (i + 1); if (!rr) rr = 1 / (i + 1); }
+  });
+  return { ndcg: idcg ? dcg(list.map(gain)) / idcg : 0, ap: total ? sum / total : 0, rr };
+}
+
+/* ---------- small helpers ---------- */
+
+const metric = () => M.metrics.find(m => m.key === state.metric);
+const sc = (runId, qid) => { const s = M.S[runId][qid]; return s ? s[state.metric] : null; };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const docTitle = (id, qid) => (isObj(M.docs[id]) && M.docs[id].title) || (qid && M.J[qid][id] && M.J[qid][id].title) || id;
+const docUrl = id => { const u = isObj(M.docs[id]) ? M.docs[id].url : null; return typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null; };
+const gradeLabel = g => (M.grades.find(x => x.value === g) || {}).label || String(g);
+function gclass(g) { if (g == null) return 'gx'; if (g <= 0) return 'g0'; const f = g / M.maxGrade; return f >= 0.999 ? 'g3' : f >= 0.5 ? 'g2' : 'g1'; }
+const gradeChip = g => g == null ? '<span class="g gx" title="Not graded">–</span>'
+  : `<span class="g ${gclass(g)}" title="${esc(gradeLabel(g))}">${esc(g)}</span>`;
+const rankClass = r => r == null ? 'none' : r <= 3 ? 'top3' : r <= M.k ? 'top10' : 'deep';
+const rankOf = (runId, qid, d) => { const l = M.runById[runId].results[qid]; const i = l ? l.indexOf(d) : -1; return i < 0 ? null : i + 1; };
+const roleTag = r => r.baseline ? ' <span class="role">baseline</span>' : '';
+const runsMode = () => M.runs.length > 0 && state.view === 'runs';
+const shownCols = () => M.runs.filter(r => state.cols.has(r.id));
+function cmp() { return M.comparisons[Number($('#f-cmp').value) || 0] || null; }
+function delta(q) { const c = cmp(); if (!c) return null; const a = sc(c.a, q.id), b = sc(c.b, q.id); return a == null || b == null ? null : a - b; }
+const legend = () => M.grades.map(g => `<span class="item">${gradeChip(g.value)} ${esc(g.label)}</span>`).join('');
+const linkOut = id => { const u = docUrl(id); return u ? ` <a href="${esc(u)}" target="_blank" rel="noopener noreferrer" title="Open in a new tab">open ↗</a>` : ''; };
+
+/* ---------- overview panels ---------- */
+
+function renderScoreOverview() {
+  const box = $('#ov-scores');
+  box.hidden = !runsMode();
+  if (box.hidden) return;
+  const m = metric();
+  const qs = M.scored;
+  $('#ov-scores-sum').textContent = `Scores for each setup (${m.avg}, average over ${plural(qs.length, 'query', 'queries')})`;
+  if (!qs.length) { $('#ov-scores-body').innerHTML = '<p class="note">No query can be scored yet: scoring needs at least one positive grade and results from every setup.</p>'; return; }
+  const cols = [['All', qs], ...M.tagsUsed.map(t => [M.tagInfo[t].label, qs.filter(q => q.tags.includes(t))])].filter(([, x]) => x.length);
+  const extras = M.runs.filter(r => !M.featured.includes(r));
+  const shown = state.allRuns ? M.runs : M.featured;
+  const avg = dict(M.runs.map(r => [r.id, cols.map(([, x]) => mean(x.map(q => sc(r.id, q.id))))]));
+  const best = cols.map((_, i) => Math.max(...shown.map(r => avg[r.id][i])));
+  const vs = r => {
+    if (!M.baseline) return '';
+    if (r === M.baseline) return '<td><span class="note">baseline</span></td>';
+    const d = qs.map(q => sc(r.id, q.id) - sc(M.baseline.id, q.id));
+    return `<td><span class="cmp up">${d.filter(x => x > MOVE).length} better</span> · <span class="cmp down">${d.filter(x => x < -MOVE).length} worse</span></td>`;
+  };
+  const row = (r, cls) => `<tr class="${cls}"><td title="${esc(r.description)}">${esc(r.label)}${roleTag(r)}</td>
+    ${avg[r.id].map((v, i) => `<td class="n${v === best[i] && shown.length > 1 ? ' top' : ''}">${fmt3(v)}</td>`).join('')}${vs(r)}</tr>`;
+  let rows = M.featured.map(r => row(r, r.baseline ? 'base' : '')).join('');
+  if (state.allRuns && extras.length) {
+    const order = [...Object.keys(M.groups), ...new Set(extras.map(r => r.group).filter(g => !M.groups[g]))];
+    const span = cols.length + 1 + (M.baseline ? 1 : 0);
+    order.forEach(g => {
+      const members = extras.filter(r => r.group === g);
+      if (!members.length) return;
+      const info = M.groups[g] || { label: g || 'Other setups', note: '' };
+      rows += `<tr class="grp"><td colspan="${span}"><strong>${esc(info.label)}</strong>${info.note ? ' · ' + esc(info.note) : ''}</td></tr>` + members.map(r => row(r, 'extra')).join('');
+    });
+    const loose = extras.filter(r => !r.group);
+    if (loose.length) rows += `<tr class="grp"><td colspan="${span}"><strong>Other setups</strong></td></tr>` + loose.map(r => row(r, 'extra')).join('');
+  }
+  const tagNotes = M.tagsUsed.filter(t => M.tagInfo[t].description).map(t => `${esc(M.tagInfo[t].label)}: ${esc(M.tagInfo[t].description)}`);
+  $('#ov-scores-body').innerHTML = `
+    <div class="scroll"><table class="ov" style="min-width:${260 + cols.length * 90 + (M.baseline ? 170 : 0)}px">
+      <thead><tr><th>Setup</th>${cols.map(([n, x]) => `<th>${esc(n)}<br>(${x.length})</th>`).join('')}${M.baseline ? `<th>Per query vs ${esc(M.baseline.label)}</th>` : ''}</tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    ${extras.length ? `<div><button type="button" class="more" id="b-allruns">${state.allRuns ? `Show only the ${M.featured.length} main setups` : `Show all ${M.runs.length} setups`}</button></div>` : ''}
+    <p class="note">Bold marks the best score in each column. ${M.baseline ? `"Better" and "worse" count queries whose score moved by more than ${MOVE} against ${esc(M.baseline.label)}. ` : ''}Every setup is scored on the same ${plural(qs.length, 'query', 'queries')} and the same grades. ${tagNotes.length ? 'Tags: ' + tagNotes.join('; ') + '.' : ''}</p>
+    ${M.notes ? `<p class="note">${esc(M.notes)}</p>` : ''}`;
+}
+
+function renderJudgmentOverview() {
+  const qs = M.queries;
+  const all = qs.flatMap(q => Object.entries(M.J[q.id]).map(([d, e]) => ({ q, d, e })));
+  const distinct = new Set(all.map(x => x.d)).size;
+  const judged = qs.filter(q => q.nGraded).length, none = qs.length - judged, noRel = qs.filter(q => q.nGraded && !q.nRel).length;
+  const stats = [[qs.length, 'queries'], [judged, 'with judgments'], [qs.filter(q => q.nRel).length, 'with a relevant result'],
+    [none, 'with no judgments'], [noRel, 'judged, none relevant'], [all.length, 'judgments'], [distinct, `distinct ${M.unit.many}`]];
+  const counts = M.grades.map(g => [g, all.filter(x => x.e.grade === g.value).length]);
+  const dist = all.length ? `<div class="dist" role="img" aria-label="${esc(counts.map(([g, n]) => `${g.label}: ${n}`).join(', '))}">${counts.filter(([, n]) => n).map(([g, n]) =>
+    `<span class="${gclass(g.value)}" style="flex:${n}" title="${esc(g.label)}: ${n}">${n / all.length > 0.06 ? n : ''}</span>`).join('')}</div>
+    <div class="legend">${counts.map(([g, n]) => `<span class="item">${gradeChip(g.value)} ${esc(g.label)} · ${n.toLocaleString()}</span>`).join('')}</div>` : '';
+  const judges = dict();
+  all.forEach(x => { const w = x.e.judge || 'Unknown'; (judges[w] = judges[w] || { n: 0, qs: new Set() }).n++; judges[w].qs.add(x.q.id); });
+  const jrows = Object.entries(judges).sort((a, b) => b[1].n - a[1].n).map(([w, v]) => `<tr><td>${esc(w)}</td><td class="n">${v.n.toLocaleString()}</td><td class="n">${v.qs.size}</td></tr>`).join('');
+  const groups = [['All', qs], ...M.tagsUsed.map(t => [M.tagInfo[t].label, qs.filter(q => q.tags.includes(t))])];
+  const trows = groups.map(([n, x]) => {
+    const j = x.filter(q => q.nGraded);
+    return `<tr><td>${esc(n)}</td><td class="n">${x.length}</td><td class="n">${j.length}</td><td class="n">${x.length - j.length}</td><td class="n">${j.filter(q => !q.nRel).length}</td>
+      <td class="n">${fmt2(mean(j.map(q => q.nGraded)))}</td><td class="n">${fmt2(mean(j.map(q => q.nRel)))}</td></tr>`;
+  }).join('');
+  $('#ov-judg-body').innerHTML = `
+    <div class="stats">${stats.map(([v, k]) => `<div class="stat"><span class="v">${v.toLocaleString()}</span><span class="k">${esc(k)}</span></div>`).join('')}</div>
+    ${dist}
+    <div class="scroll"><table class="ov" style="min-width:640px"><thead><tr><th>Tag</th><th>Queries</th><th>Judged</th><th>No judgments</th><th>None relevant</th><th>Graded per judged query</th><th>Relevant per judged query</th></tr></thead><tbody>${trows}</tbody></table></div>
+    ${jrows ? `<div class="scroll"><table class="ov" style="min-width:420px"><thead><tr><th>Graded by</th><th>Judgments</th><th>Queries</th></tr></thead><tbody>${jrows}</tbody></table></div>` : ''}
+    <p class="note">${M.relMin == null ? 'Any grade above 0 counts as relevant.' : `Grades of ${M.relMin} or more count as relevant.`} A query can only be scored once it has at least one relevant judgment.</p>`;
+}
+
+/* ---------- query list ---------- */
+
+function initControls() {
+  const rm = runsMode();
+  $('#cmp-wrap').hidden = !rm || !M.comparisons.length;
+  $('#metric-wrap').hidden = !rm;
+  $('#f-cmp').innerHTML = M.comparisons.map((c, i) => `<option value="${i}">${esc(c.label)}</option>`).join('');
+  $('#f-metric').innerHTML = M.metrics.map(m => `<option value="${m.key}">${esc(m.label)}</option>`).join('');
+  $('#f-metric').value = state.metric;
+  $('#f-tag').innerHTML = `<option value="">All tags</option>` + M.tagsUsed.map(t => `<option value="${esc(t)}">${esc(M.tagInfo[t].label)} (${M.queries.filter(q => q.tags.includes(t)).length})</option>`).join('');
+  const counts = {
+    all: M.queries.length, scored: M.scored.length, judged: M.queries.filter(q => q.nGraded).length,
+    unjudged: M.queries.filter(q => !q.nGraded).length, norel: M.queries.filter(q => q.nGraded && !q.nRel).length,
+  };
+  const shows = [['all', 'All queries'], ...(rm ? [['scored', 'Scored']] : []), ['judged', 'Has judgments'], ['unjudged', 'No judgments'], ['norel', 'None relevant']];
+  $('#f-show').innerHTML = shows.map(([v, l]) => `<option value="${v}">${l} (${counts[v]})</option>`).join('');
+  $('#f-show').value = rm && M.scored.length ? 'scored' : 'all';
+  const sorts = rm ? [['order', 'File order'], ['gain', 'Biggest gain'], ['loss', 'Biggest loss'], ['weak', 'Weakest scores'], ['alpha', 'A to Z']]
+    : [['order', 'File order'], ['fewrel', 'Fewest relevant'], ['most', 'Most graded'], ['alpha', 'A to Z']];
+  $('#f-sort').innerHTML = sorts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  if (rm && !M.comparisons.length) $('#f-sort').querySelectorAll('option[value="gain"], option[value="loss"]').forEach(o => o.remove());
+}
+
+function filteredQueries() {
+  const text = $('#f-text').value.trim().toLowerCase(), tag = $('#f-tag').value, show = $('#f-show').value, sort = $('#f-sort').value;
+  let qs = M.queries.filter(q => (!text || q.text.toLowerCase().includes(text) || q.id.toLowerCase().includes(text)) && (!tag || q.tags.includes(tag))
+    && (show === 'all' || (show === 'scored' && M.scoredSet.has(q.id)) || (show === 'judged' && q.nGraded) || (show === 'unjudged' && !q.nGraded) || (show === 'norel' && q.nGraded && !q.nRel)));
+  const last = (f, dir) => (x, y) => { const a = f(x), b = f(y); if (a == null && b == null) return x.n - y.n; if (a == null) return 1; if (b == null) return -1; return dir * (a - b) || x.n - y.n; };
+  const weakRun = () => { const c = cmp(); return c ? c.a : (M.baseline || M.runs[0]).id; };
+  if (sort === 'gain') qs.sort(last(delta, -1));
+  if (sort === 'loss') qs.sort(last(delta, 1));
+  if (sort === 'weak') { const r = weakRun(); qs.sort(last(q => M.scoredSet.has(q.id) ? sc(r, q.id) : null, 1)); }
+  if (sort === 'fewrel') qs.sort((x, y) => (x.nGraded ? 0 : 1) - (y.nGraded ? 0 : 1) || x.nRel - y.nRel || x.n - y.n);
+  if (sort === 'most') qs.sort((x, y) => y.nGraded - x.nGraded || x.n - y.n);
+  if (sort === 'alpha') qs.sort((x, y) => x.text.localeCompare(y.text));
+  return qs;
+}
+
+function renderList() {
+  const qs = filteredQueries();
+  const rm = runsMode(), c = rm ? cmp() : null;
+  const tagText = q => q.tags.map(t => M.tagInfo[t].label).join(', ');
+  $('#qlist').innerHTML = qs.length ? qs.map(q => {
+    let right = '', meta;
+    if (rm && M.scoredSet.has(q.id)) {
+      if (c) {
+        const d = delta(q), cls = d > MOVE ? 'up' : d < -MOVE ? 'down' : 'flat';
+        const shown = Math.abs(d) < 0.005 ? 0 : d; // avoid "-0.00"
+        right = `<span class="delta ${cls}" title="${esc(M.runById[c.a].label)} minus ${esc(M.runById[c.b].label)}">${shown > 0 ? '+' : ''}${fmt2(shown)}</span>`;
+        meta = `${fmt2(sc(c.a, q.id))} vs ${fmt2(sc(c.b, q.id))}`;
+      } else {
+        const r = (M.baseline || M.runs[0]).id;
+        meta = `${metric().label} ${fmt2(sc(r, q.id))}`;
+      }
+    } else if (rm) {
+      meta = q.nGraded ? 'not scored: none relevant' : 'not scored: no judgments';
+    } else {
+      meta = q.nGraded ? `${q.nGraded} graded · ${q.nRel} relevant` : 'no judgments';
+      right = `<span class="delta ${q.nRel ? 'flat' : 'down'}" title="Relevant ${esc(M.unit.many)}">${q.nRel}</span>`;
+    }
+    const tags = tagText(q);
+    return `<li><button type="button" data-q="${esc(q.id)}" aria-current="${q.id === state.qid}">
+      <span class="qtext">${esc(q.text)}</span>${right}
+      <span class="qmeta">${tags ? esc(tags) + ' · ' : ''}${esc(meta)}</span></button></li>`;
+  }).join('') : '<li class="empty">No queries match.</li>';
+  let count = `${qs.length} of ${M.queries.length} queries`;
+  if (rm && c) {
+    const ds = qs.map(delta).filter(d => d != null);
+    count += ` · ${ds.filter(x => x > MOVE).length} better, ${ds.filter(x => x < -MOVE).length} worse · number = ${M.runById[c.a].label} minus ${M.runById[c.b].label}`;
+  } else if (!rm) count += ' · number = relevant ' + M.unit.many;
+  $('#qcount').textContent = count;
+}
+
+/* ---------- one query ---------- */
+
+function select(qid) {
+  if (!M.byId[qid]) return;
+  state.qid = qid; state.pick = null;
+  try { history.replaceState(null, '', '#' + encodeURIComponent(qid)); } catch (e) { /* sandboxed pages may block this */ }
+  document.querySelectorAll('#qlist button').forEach(b => b.setAttribute('aria-current', b.dataset.q === qid));
+  renderDetail();
+}
+
+function headHtml(q) {
+  const judges = Object.entries(q.judges).sort((a, b) => b[1] - a[1]);
+  const chips = [
+    ...q.tags.map(t => `<span class="chip" title="${esc(M.tagInfo[t].description)}">${esc(M.tagInfo[t].label)}</span>`),
+    judges.length ? `<span class="chip">Graded by ${judges.map(([w, n]) => judges.length > 1 ? `${esc(w)} (${n})` : esc(w)).join(', ')}</span>` : '<span class="chip">No judgments yet</span>',
+    `<span class="chip">${esc(plural(q.nRel, `${M.unit.one} graded relevant`, `${M.unit.many} graded relevant`))}</span>`,
+    ...Object.entries(q.meta).map(([k, v]) => `<span class="chip">${esc(k)}: ${esc(typeof v === 'number' ? v.toLocaleString() : v)}</span>`),
+    `<span class="chip">${esc(q.id)}</span>`,
+  ];
+  return `<div class="panel qhead"><h2>${esc(q.text)}</h2><div class="chips">${chips.join('')}</div>${q.description ? `<p class="desc">${esc(q.description)}</p>` : ''}</div>`;
+}
+
+function renderDetail() {
+  const q = M.byId[state.qid];
+  if (!q) { $('#detail').innerHTML = ''; return; }
+  if (!runsMode()) return renderJudgmentDetail(q);
+  const cols = shownCols(), m = metric(), scored = M.scoredSet.has(q.id);
+  const vals = cols.map(r => sc(r.id, q.id)).filter(v => v != null);
+  const best = vals.length ? Math.max(...vals) : null;
+  const scores = scored ? cols.map(r => { const v = sc(r.id, q.id); return `<div class="score">
+      <span class="name">${esc(r.label)}${roleTag(r)}</span>
+      <span class="val">${fmt2(v)}${v === best && best > 0 && cols.length > 1 ? ' <span class="chip" style="font-family:var(--body)">best</span>' : ''}</span>
+      <span class="bar"><span style="width:${(v || 0) * 100}%"></span></span></div>`; }).join('')
+    : `<p class="note">${q.nGraded ? `Not scored: none of the graded ${esc(M.unit.many)} is relevant.` : 'Not scored: this query has no judgments yet.'}</p>`;
+  const colHtml = cols.map(r => {
+    const list = r.results[q.id];
+    const items = !list ? '<li class="empty">Not run for this query</li>' : !list.length ? '<li class="empty">No results</li>'
+      : list.slice(0, M.k).map((d, i) => { const e = M.J[q.id][d]; return `<li><button type="button" data-c="${esc(d)}" class="${d === state.pick ? 'sel' : ''}" title="${esc(docTitle(d, q.id))}">
+        <span class="rk">${i + 1}</span>${gradeChip(e && e.grade)}<span class="t">${esc(docTitle(d, q.id))}</span></button></li>`; }).join('');
+    return `<div class="col"><h4>${esc(r.label)}${roleTag(r)}</h4><ol class="ranked">${items}</ol></div>`;
+  }).join('');
+  const graded = Object.entries(M.J[q.id]);
+  const rows = graded.filter(([, e]) => state.showZero || e.grade > 0)
+    .map(([d, e]) => ({ d, e, best: Math.min(...cols.map(r => rankOf(r.id, q.id, d) ?? 1e9)) }))
+    .sort((a, b) => b.e.grade - a.e.grade || a.best - b.best)
+    .map(({ d, e }) => `<tr data-c="${esc(d)}" class="${d === state.pick ? 'sel' : ''}">
+      <td>${gradeChip(e.grade)}</td>
+      <td><div>${esc(docTitle(d, q.id))}</div><div class="cid">${esc(d)}${e.judge ? ' · ' + esc(e.judge) : ''}${e.note ? ' · ' + esc(e.note) : ''}</div></td>
+      ${cols.map(r => { const k = rankOf(r.id, q.id, d); return `<td class="c"><span class="rc ${rankClass(k)}">${k ?? '—'}</span></td>`; }).join('')}
+    </tr>`).join('');
+  const picker = M.runs.length > 1 ? `<details class="pickcols"><summary>Choose setups to show (${cols.length} of ${M.runs.length})</summary><div class="opts">${M.runs.map(r =>
+    `<label><input type="checkbox" data-col="${esc(r.id)}" ${state.cols.has(r.id) ? 'checked' : ''}> ${esc(r.label)}</label>`).join('')}</div></details>` : '';
+  const zeroCount = graded.filter(([, e]) => e.grade <= 0).length;
+  $('#detail').innerHTML = `${headHtml(q)}
+    <section><div class="sechead"><h3>Score by setup (${esc(m.label)}, 0 to 1)</h3>${picker}</div><div class="scores">${scores}</div></section>
+    <section>
+      <div class="sechead"><h3>Top ${M.k} ${esc(M.unit.many)} in each setup</h3>
+        <div class="legend">${legend()}<span class="item">${gradeChip(null)} not graded</span><span class="item">Select a ${esc(M.unit.one)} to follow it across setups</span></div></div>
+      <div class="scroll"><div class="cols" style="--ncols:${Math.max(cols.length, 1)}">${colHtml || '<p class="note">Choose at least one setup to show.</p>'}</div></div>
+    </section>
+    <div id="picked"></div>
+    <section class="panel" style="padding:14px 16px">
+      <div class="sechead"><h3>Graded ${esc(M.unit.many)} and where each setup ranks them</h3>
+        ${zeroCount ? `<label class="toggle"><input id="f-zero" type="checkbox" ${state.showZero ? 'checked' : ''}> Include not relevant (${zeroCount})</label>` : ''}</div>
+      <p class="note">Rank among ${esc(M.unit.many)}${M.depth ? `, up to ${M.depth}` : ''}. <span class="rc top3">1–3</span> <span class="rc top10">4–${M.k}</span> <span class="rc deep">${M.k + 1}+</span> <span class="rc none">—</span> not in the list.</p>
+      <div class="scroll"><table class="grid" style="min-width:${320 + cols.length * 92}px">
+        <thead><tr><th>Grade</th><th>${esc(cap(M.unit.one))}</th>${cols.map(r => `<th class="c">${esc(r.label)}</th>`).join('')}</tr></thead>
+        <tbody>${rows || `<tr><td colspan="${2 + cols.length}" class="note">No graded ${esc(M.unit.many)}${zeroCount ? ' above 0' : ''}.</td></tr>`}</tbody>
+      </table></div>
+    </section>`;
+  renderPicked();
+}
+
+function renderJudgmentDetail(q) {
+  const graded = Object.entries(M.J[q.id]).sort((a, b) => b[1].grade - a[1].grade || docTitle(a[0], q.id).localeCompare(docTitle(b[0], q.id)));
+  const rows = graded.map(([d, e]) => `<tr>
+      <td>${gradeChip(e.grade)}</td>
+      <td><div>${esc(docTitle(d, q.id))}${linkOut(d)}</div><div class="cid">${esc(d)}</div></td>
+      <td>${esc(e.judge || '')}${e.note ? `<div class="cid">${esc(e.note)}</div>` : ''}</td>
+      <td class="why">${esc(e.reason)}</td></tr>`).join('');
+  $('#detail').innerHTML = `${headHtml(q)}
+    <section class="panel" style="padding:14px 16px">
+      <div class="sechead"><h3>Graded ${esc(M.unit.many)} (${graded.length})</h3><div class="legend">${legend()}</div></div>
+      <div class="scroll"><table class="grid" style="min-width:680px">
+        <thead><tr><th>Grade</th><th>${esc(cap(M.unit.one))}</th><th>Graded by</th><th>Reason</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="4" class="note">No judgments for this query yet.</td></tr>`}</tbody>
+      </table></div>
+    </section>`;
+}
+
+function renderPicked() {
+  const box = $('#picked');
+  if (!box) return;
+  const q = M.byId[state.qid], d = state.pick;
+  if (!d) { box.innerHTML = ''; return; }
+  const e = M.J[q.id][d];
+  box.innerHTML = `<div class="panel picked">
+    <div class="ttl">${gradeChip(e && e.grade)} ${esc(docTitle(d, q.id))}${linkOut(d)}</div>
+    <div class="meta">${esc(d)} · ${e ? `graded ${esc(gradeLabel(e.grade))}${e.judge ? ' by ' + esc(e.judge) : ''}${e.note ? ' · ' + esc(e.note) : ''}` : 'not graded for this query'}</div>
+    ${e && e.reason ? `<p class="why">${esc(e.reason)}</p>` : ''}
+    <div class="ranks">${shownCols().map(r => { const k = rankOf(r.id, q.id, d); return `<span class="chip">${esc(r.label)}: <span class="rc ${rankClass(k)}">${k ?? '—'}</span></span>`; }).join('')}</div>
+  </div>`;
+}
+
+function pick(d) {
+  state.pick = state.pick === d ? null : d;
+  document.querySelectorAll('ol.ranked button').forEach(b => b.classList.toggle('sel', b.dataset.c === state.pick));
+  document.querySelectorAll('table.grid tr[data-c]').forEach(r => r.classList.toggle('sel', r.dataset.c === state.pick));
+  renderPicked();
+}
+
+/* ---------- wiring ---------- */
+
+function renderView() {
+  const rm = runsMode();
+  $('#viewseg').hidden = !M.runs.length;
+  $('#viewseg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === (rm ? 'runs' : 'judgments')));
+  $('#ov-judg').open = !rm;
+  if (rm) $('#ov-scores').open = true;
+  initControls();
+  renderScoreOverview();
+  renderJudgmentOverview();
+  renderList();
+  const first = filteredQueries()[0];
+  select(M.byId[state.qid] ? state.qid : first ? first.id : M.queries[0].id);
+}
+
+function load(raw, source) {
+  let model;
+  try { model = normalize(raw); } catch (e) { return showLanding(`Couldn't open ${source}: ${e.message}`); }
+  M = model;
+  const want = decodeURIComponent((location.hash || '').slice(1));
+  state = {
+    qid: M.byId[want] ? want : null, pick: null, showZero: false, allRuns: false, metric: 'ndcg',
+    view: M.runs.length ? 'runs' : 'judgments', cols: new Set(M.featured.map(r => r.id)),
+  };
+  document.title = M.title === 'Relevance Explorer' ? M.title : `${M.title} · Relevance Explorer`;
+  $('#h-title').textContent = M.title;
+  $('#h-desc').textContent = M.description || `${plural(M.queries.length, 'query', 'queries')}${M.runs.length ? `, ${plural(M.runs.length, 'search setup', 'search setups')}` : ''}.`;
+  $('#warnings').innerHTML = M.warn.length ? `<details class="warn"><summary>${plural(M.warn.length, 'problem', 'problems')} in ${esc(source)}</summary><ul>${M.warn.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>` : '';
+  $('#landing').hidden = true;
+  $('#app').hidden = false;
+  $('#f-text').value = '';
+  renderView();
+}
+
+function showLanding(msg) {
+  $('#landing').hidden = false;
+  $('#app').hidden = !M;
+  if (M) $('#landing').scrollIntoView();
+  $('#load-msg').innerHTML = msg ? `<span class="err">${esc(msg)}</span>` : '';
+}
+
+function readFile(f) {
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => { let raw; try { raw = JSON.parse(reader.result); } catch (e) { return showLanding(`${f.name} isn't valid JSON: ${e.message}`); } load(raw, f.name); };
+  reader.onerror = () => showLanding(`Couldn't read ${f.name}.`);
+  reader.readAsText(f);
+}
+
+document.addEventListener('click', ev => {
+  const t = ev.target;
+  const qb = t.closest('#qlist button'); if (qb) return select(qb.dataset.q);
+  if (t.closest('input[data-col], .pickcols')) return;
+  const cb = t.closest('[data-c]'); if (cb && runsMode()) return pick(cb.dataset.c);
+  if (t.id === 'b-allruns') { state.allRuns = !state.allRuns; return renderScoreOverview(); }
+  if (t.id === 'b-open' || t.id === 'b-open2') return $('#file').click();
+  const vb = t.closest('#viewseg button'); if (vb && vb.dataset.view !== state.view) { state.view = vb.dataset.view; return renderView(); }
+});
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.id === 'f-zero') { state.showZero = t.checked; return renderDetail(); }
+  if (t.dataset && t.dataset.col) {
+    if (t.checked) state.cols.add(t.dataset.col); else state.cols.delete(t.dataset.col);
+    renderDetail();
+    const p = $('.pickcols'); if (p) p.open = true; // keep the picker open while choosing
+    return;
+  }
+  if (t.id === 'file') { readFile(t.files[0]); t.value = ''; }
+});
+document.addEventListener('input', ev => {
+  if (!M) return;
+  const id = ev.target.id;
+  if (id === 'f-metric') { state.metric = ev.target.value; renderScoreOverview(); renderList(); return renderDetail(); }
+  if (['f-text', 'f-tag', 'f-show', 'f-sort', 'f-cmp'].includes(id)) renderList();
+});
+let dragDepth = 0;
+window.addEventListener('dragenter', ev => { if ([...(ev.dataTransfer?.types || [])].includes('Files')) { dragDepth++; document.body.classList.add('dragging'); } });
+window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) document.body.classList.remove('dragging'); });
+window.addEventListener('dragover', ev => ev.preventDefault());
+window.addEventListener('drop', ev => { ev.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging'); readFile(ev.dataTransfer?.files?.[0]); });
+
+// Built-in data (from embed.py) loads at once; otherwise wait for a dropped or chosen file.
+(function start() {
+  const embedded = $('#re-data').textContent.trim();
+  if (!embedded) return showLanding('');
+  try { load(JSON.parse(embedded), 'the built-in data'); } catch (e) { showLanding(`The built-in data isn't valid JSON: ${e.message}`); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Data files with real judgments stay local unless you mean to share them.
+data/
+*.local.json
+.DS_Store

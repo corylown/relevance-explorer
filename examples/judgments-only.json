@@ -1,0 +1,265 @@
+{
+ "title": "Sample catalog tests",
+ "description": "A small made-up test set showing the file format.",
+ "unit": {
+  "singular": "record",
+  "plural": "records"
+ },
+ "k": 5,
+ "grades": [
+  {
+   "value": 3,
+   "label": "Exactly right"
+  },
+  {
+   "value": 2,
+   "label": "Useful"
+  },
+  {
+   "value": 1,
+   "label": "Marginal"
+  },
+  {
+   "value": 0,
+   "label": "Not relevant"
+  }
+ ],
+ "tags": {
+  "known_item": {
+   "label": "Known item",
+   "description": "Names one specific record."
+  },
+  "topic": {
+   "label": "Topic",
+   "description": "Describes a subject."
+  },
+  "people": {
+   "label": "People",
+   "description": "About a person or group."
+  }
+ },
+ "docs": {
+  "r1": {
+   "title": "Rachel Carson field notebooks, 1940-1962"
+  },
+  "r2": {
+   "title": "Silent Spring manuscript drafts"
+  },
+  "r3": {
+   "title": "Pesticide regulation hearings, 1963"
+  },
+  "r4": {
+   "title": "Bay Area water quality survey records"
+  },
+  "r5": {
+   "title": "Campus arboretum planting records"
+  },
+  "r6": {
+   "title": "Oral histories of farm workers, 1970-1985"
+  },
+  "r7": {
+   "title": "United Farm Workers newsletter run"
+  },
+  "r8": {
+   "title": "California grape boycott posters"
+  },
+  "r9": {
+   "title": "Agricultural extension photographs"
+  },
+  "r10": {
+   "title": "Sierra Club chapter minutes"
+  },
+  "r11": {
+   "title": "Map collection: California watersheds"
+  },
+  "r12": {
+   "title": "Campus newspaper, 1965-1975"
+  },
+  "r13": {
+   "title": "Student protest flyers, 1968-1972"
+  },
+  "r14": {
+   "title": "Faculty senate minutes, 1969"
+  },
+  "r15": {
+   "title": "Physics department lab notebooks"
+  }
+ },
+ "queries": [
+  {
+   "id": "carson",
+   "text": "rachel carson notebooks",
+   "tags": [
+    "known_item",
+    "people"
+   ],
+   "description": "The field notebooks are the target; the manuscript drafts are close."
+  },
+  {
+   "id": "pesticides",
+   "text": "history of pesticide regulation",
+   "tags": [
+    "topic"
+   ]
+  },
+  {
+   "id": "farmworkers",
+   "text": "farm worker organizing in california",
+   "tags": [
+    "topic",
+    "people"
+   ]
+  },
+  {
+   "id": "water",
+   "text": "water quality",
+   "tags": [
+    "topic"
+   ]
+  },
+  {
+   "id": "protest",
+   "text": "student protests vietnam era",
+   "tags": [
+    "topic",
+    "people"
+   ]
+  },
+  {
+   "id": "lab",
+   "text": "physics lab notebooks",
+   "tags": [
+    "known_item"
+   ]
+  },
+  {
+   "id": "arboretum",
+   "text": "who planted the campus trees",
+   "tags": [
+    "topic"
+   ],
+   "description": "Not graded yet."
+  }
+ ],
+ "judgments": [
+  {
+   "query": "carson",
+   "doc": "r1",
+   "grade": 3,
+   "judge": "Product owner",
+   "reason": "The notebooks the query names."
+  },
+  {
+   "query": "carson",
+   "doc": "r2",
+   "grade": 2,
+   "judge": "Product owner",
+   "reason": "Same author, related papers."
+  },
+  {
+   "query": "carson",
+   "doc": "r3",
+   "grade": 1,
+   "judge": "Product owner",
+   "reason": "Mentions Carson's testimony."
+  },
+  {
+   "query": "pesticides",
+   "doc": "r3",
+   "grade": 3,
+   "judge": "Product owner",
+   "reason": "Hearings on pesticide rules."
+  },
+  {
+   "query": "pesticides",
+   "doc": "r2",
+   "grade": 2,
+   "judge": "Product owner",
+   "reason": "Silent Spring drove the rules."
+  },
+  {
+   "query": "pesticides",
+   "doc": "r9",
+   "grade": 0,
+   "judge": "Product owner",
+   "reason": "Farm photos, no regulation content."
+  },
+  {
+   "query": "farmworkers",
+   "doc": "r7",
+   "grade": 3,
+   "judge": "Reviewer",
+   "reason": "Union newsletter."
+  },
+  {
+   "query": "farmworkers",
+   "doc": "r6",
+   "grade": 3,
+   "judge": "Reviewer",
+   "reason": "First-hand accounts."
+  },
+  {
+   "query": "farmworkers",
+   "doc": "r8",
+   "grade": 2,
+   "judge": "Reviewer",
+   "reason": "Boycott materials."
+  },
+  {
+   "query": "farmworkers",
+   "doc": "r9",
+   "grade": 1,
+   "judge": "LLM judge",
+   "reason": "Shows farm labor but not organizing."
+  },
+  {
+   "query": "water",
+   "doc": "r4",
+   "grade": 3,
+   "judge": "LLM judge",
+   "reason": "Water quality survey."
+  },
+  {
+   "query": "water",
+   "doc": "r11",
+   "grade": 1,
+   "judge": "LLM judge",
+   "reason": "Watershed maps, indirectly related."
+  },
+  {
+   "query": "water",
+   "doc": "r10",
+   "grade": 0,
+   "judge": "LLM judge",
+   "reason": "Not about water."
+  },
+  {
+   "query": "protest",
+   "doc": "r13",
+   "grade": 3,
+   "judge": "Reviewer",
+   "reason": "Protest flyers from the period."
+  },
+  {
+   "query": "protest",
+   "doc": "r12",
+   "grade": 2,
+   "judge": "Reviewer",
+   "reason": "Covers the protests."
+  },
+  {
+   "query": "protest",
+   "doc": "r14",
+   "grade": 1,
+   "judge": "Reviewer",
+   "reason": "Faculty response."
+  },
+  {
+   "query": "lab",
+   "doc": "r10",
+   "grade": 0,
+   "judge": "Reviewer",
+   "reason": "Wrong kind of record."
+  }
+ ]
+}
