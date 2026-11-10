@@ -2,3 +2,8 @@
 data/
 *.local.json
 .DS_Store
+
+# Share the Claude Code skills, even where a global gitignore excludes .claude; keep other local settings out.
+!.claude/
+.claude/*
+!.claude/skills/
