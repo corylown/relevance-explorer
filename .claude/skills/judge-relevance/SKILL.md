@@ -66,7 +66,7 @@ python3 tools/judge.py grade data/tests.json --doc-text data/docs.jsonl \
 - **Interruptions:** progress is saved to `<out>.progress.jsonl`, so running the same command again resumes. Failed batches are listed and retried on the next run. To start over, delete the progress file.
 - **Credentials:** these come from the environment (`ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or an `ant auth login` profile). `ANTHROPIC_BASE_URL` points it at a gateway. Never print a key.
 
-After a run, check the output with `python3 tools/validate.py <out>`. Then tell the user what changed: how many new grades, any failed batches, and any documents skipped for having no text. Suggest opening the file in the viewer and spot-checking a few of Claude's reasons, especially in the queries where scores moved the most.
+After a run, check the output with `python3 tools/validate.py <out>`. Then tell the user what changed: how many new grades, any failed batches, and any documents skipped for having no text. Suggest opening the file in the viewer and spot-checking a few of Claude's reasons, especially in the queries where scores moved the most. Once the baseline is graded, the `suggest-setups` skill can work out what to try next.
 
 ## Things to keep straight
 

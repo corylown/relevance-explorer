@@ -10,7 +10,7 @@ A run is one search setup's ranked results: `{query id: [doc ids, best first]}`,
 ## 1. Agree on the setups and the grading unit
 
 Ask the user:
-- **Which setups to compare.** Include what runs in production today as the baseline (`"baseline": true`). Mark the few setups to show by default with `"featured": true`. A short `label` is what people will read.
+- **Which setups to compare.** If they only know the baseline, run and grade that first. Then the `suggest-setups` skill can propose changes from evidence. Otherwise, include what runs in production today as the baseline (`"baseline": true`). Mark the few setups to show by default with `"featured": true`. A short `label` is what people will read.
 - **What counts as one result.** Judgments and runs must use the same ids, at the level people judge. If the engine returns items but people judge collections, roll each hit up to its collection. Each collection keeps the rank of its first hit and appears once. ArcLight did exactly this, mapping each component to the first value of `parent_ids_ssim`. Decide this before grading, because changing it later invalidates the grades.
 - **How deep to save.** Keep at least the top 10 for NDCG@10. Keep 50 or more if MAP or the viewer's "where each setup ranks them" table matters.
 

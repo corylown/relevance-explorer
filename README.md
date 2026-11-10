@@ -28,6 +28,7 @@ Scripts in `tools/` produce and check the data. Each one explains its options in
 | `tools/validate.py FILE` | Checks a file the way the viewer does and prints each run's NDCG@k, MAP and MRR (`--by-tag` for each tag). Standard library only. |
 | `tools/adapters/solr_runs.py` | Runs every query against Solr once per search setup and writes the `runs`, plus the document text for grading. Can roll results up to a parent (items to collections). Standard library only. |
 | `tools/adapters/trec_to_json.py` | Builds a file from TREC topics, qrels and run files. |
+| `tools/diagnose.py FILE` | Shows where and why a baseline ranks badly: the well-graded documents it misses, and with a Solr config, whether each is blocked by `mm`, ranked low, only in unsearched fields, or matched by no query term. Standard library only. |
 | `tools/judge.py calibrate` | Re-grades documents people already graded, blind, and reports how well Claude agrees with them (agreement rates, weighted kappa, the biggest disagreements). |
 | `tools/judge.py grade` | Grades the documents the runs returned that nobody has graded yet, blind, and writes a copy of the file with the new grades added. Existing grades are never changed. |
 
@@ -35,9 +36,10 @@ Scripts in `tools/` produce and check the data. Each one explains its options in
 
 ### With Claude Code
 
-The repo includes two Claude Code skills, in `.claude/skills/`, that walk through these steps and catch the usual mistakes. In Claude Code, opened in this repo, ask for what you want, for example "grade the new results in data/tests.json" or "add a run for our Solr phrase-boost setup".
+The repo includes three Claude Code skills, in `.claude/skills/`, that walk through these steps and catch the usual mistakes. In Claude Code, opened in this repo, ask for what you want, for example "grade the new results in data/tests.json" or "add a run for our Solr phrase-boost setup".
 
 - **`export-runs`** works out what counts as one result, which setups to compare and how deep to save. It then runs the right adapter, or writes one for an engine without an adapter, and checks the scores for id mismatches.
+- **`suggest-setups`** reads how search is configured today, diagnoses where the graded baseline fails, and proposes a few single-change setups to try, each with its evidence and its risks. It doesn't run or grade anything.
 - **`judge-relevance`** checks the inputs and calibrates against people's grades before grading in bulk. It shows the plan and asks before spending anything, then grades and reports what changed.
 
 ## Data format
