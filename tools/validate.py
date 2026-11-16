@@ -6,7 +6,9 @@
 
 Exits with status 1 if the file can't be opened, 2 if it opens with problems (the same problems
 the viewer lists), and 0 if it's clean. Scores are the viewer's: NDCG@k, MAP and MRR averaged
-over the queries every run can be scored on.
+over the queries every run can be scored on. The "graded" column is the share of each run's top-k
+results on those queries that have a grade; ungraded results count as not relevant, so a run
+below 100% may score lower than it should until its results are graded.
 """
 import argparse
 import sys
@@ -44,13 +46,24 @@ def main():
         print(f'\n{len(ts.runs)} runs, scored on {len(scored)} queries (k = {ts.k})')
         if scored:
             width = min(60, max(len(r['label']) for r in ts.runs))
-            print(f'  {"run".ljust(width)}  NDCG@{ts.k}    MAP    MRR')
+            print(f'  {"run".ljust(width)}  NDCG@{ts.k}    MAP    MRR  graded')
+            ungraded = []
             for r in ts.runs:
                 s = [ts.score(r, q) for q in scored]
+                top = [(q, d) for q in scored for d in r['results'][q][:ts.k]]
+                missing = sum(1 for q, d in top if d not in ts.judgments[q])
+                if missing:
+                    ungraded.append((r['label'], missing, len({q for q, d in top if d not in ts.judgments[q]})))
+                graded = f'{100 * (len(top) - missing) / len(top):5.0f}%' if top else '     -'
                 tag = '  (baseline)' if r['baseline'] else ''
                 label = r['label'] if len(r['label']) <= width else r['label'][:width - 1] + '…'
                 print(f'  {label.ljust(width)}  {mean(x["ndcg"] for x in s):7.3f} {mean(x["ap"] for x in s):6.3f} '
-                      f'{mean(x["rr"] for x in s):6.3f}{tag}')
+                      f'{mean(x["rr"] for x in s):6.3f}  {graded}{tag}')
+            if ungraded:
+                print(f'\n  Ungraded results in the top {ts.k} count as not relevant, so these scores may be too low:')
+                for label, n, nq in ungraded:
+                    print(f'  - "{label}": {n} ungraded in {nq} {"query" if nq == 1 else "queries"}')
+                print('  Grade them before comparing runs, for example with tools/judge.py grade (see the judge-relevance skill).')
             if args.by_tag:
                 print(f'\n  NDCG@{ts.k} by tag:')
                 tags = list(dict.fromkeys(t for q in ts.queries for t in q['tags']))

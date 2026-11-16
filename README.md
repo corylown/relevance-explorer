@@ -25,7 +25,7 @@ Scripts in `tools/` produce and check the data. Each one explains its options in
 
 | Script | What it does |
 |---|---|
-| `tools/validate.py FILE` | Checks a file the way the viewer does and prints each run's NDCG@k, MAP and MRR (`--by-tag` for each tag). Standard library only. |
+| `tools/validate.py FILE` | Checks a file the way the viewer does and prints each run's NDCG@k, MAP and MRR (`--by-tag` for each tag), plus the share of each run's top k that is graded. Standard library only. |
 | `tools/adapters/solr_runs.py` | Runs every query against Solr once per search setup and writes the `runs`, plus the document text for grading. Can roll results up to a parent (items to collections). Standard library only. |
 | `tools/adapters/trec_to_json.py` | Builds a file from TREC topics, qrels and run files. |
 | `tools/diagnose.py FILE` | Shows where and why a baseline ranks badly: the well-graded documents it misses, and with a Solr config, whether each is blocked by `mm`, ranked low, only in unsearched fields, or matched by no query term. Standard library only. |
@@ -119,3 +119,4 @@ Unjudged results count as not relevant. A query is scored only if it has at leas
 
 - **What counts as a document.** If results should be judged at a coarser level (for example, rolling components up to their collection), do that before writing the file, so judgments and rankings use the same ids.
 - **How deep to save rankings.** Ranks in the graded-documents table only go as deep as the lists you provide. MAP depends on that depth too.
+- **How deep to grade.** Ungraded results count as not relevant, so a score is only trustworthy down to the depth that has been graded. `judge.py grade` grades each run's top 10 by default (`--depth`). NDCG@10 and MRR are then sound, but MAP looks at the whole ranked list, so with rankings saved deeper than the graded depth it is mostly measuring missing grades. Grade as deep as the deepest score you report, or don't report MAP. Each time a run is added, grade its new top-k results before comparing it; the "graded" column in `validate.py` shows when a run's top k isn't fully graded.
