@@ -115,8 +115,29 @@ Unjudged results count as not relevant. A query is scored only if it has at leas
 
 "Better" and "worse" count queries whose score moved by more than 0.02 against the baseline.
 
+### What each score tells you
+
+Some terms, used the same way throughout: a run's **results** are the ranked list it returns for a query; a result's **rank** is its position in that list; a **grade** is a judge's 0–3 verdict on one document for one query. "Relevant" means a grade at or above `relevantMin`.
+
+- **NDCG@k: how good is the top of the list?** It uses the grades themselves, so a highly relevant document at #1 beats a marginal one at #1, and it gives more weight to higher ranks. It only looks at the top k. This is usually the best headline score when people look at the first page of results.
+- **MRR: how far down is the first relevant result?** 1.0 means a relevant result is always at #1; 0.5 means it's at #2 on average. It ignores everything after the first relevant result and doesn't distinguish a marginal match from the ideal one. Useful for known-item searches, where the searcher wants one particular document.
+- **MAP: how many of the relevant documents does the run find, and how high?** It rewards a run for surfacing every relevant document, not just a good first few, which matters when searchers want everything on a topic. It treats every relevant grade the same.
+
+On most test sets the three move together. When they disagree, the difference is informative: NDCG up but MRR flat means better results below the first one; MAP up but NDCG flat means more relevant documents found further down.
+
+### Why MAP needs care
+
+NDCG@k stops at rank k. MAP has no cutoff: it goes down every result saved for the run, which may be 50 or more, and divides by the number of relevant documents graded for that query.
+
+That makes it sensitive to two things that aren't about search quality:
+
+- **Ungraded results.** If grading covered only each run's top 10, most results below #10 have no grade, and they count as not relevant. MAP is then partly measuring which documents happen to be graded. A run that surfaces relevant documents nobody has graded scores lower than it should.
+- **How many results were saved.** Saving 20 results per query or 100 changes MAP, even though the search didn't change.
+
+So MAP is only trustworthy when grading goes as deep as the saved results. If you grade the top 10, report NDCG@10 and MRR and leave MAP aside, or cut the saved results to 10 before computing it.
+
 ### Things the viewer leaves to you
 
 - **What counts as a document.** If results should be judged at a coarser level (for example, rolling components up to their collection), do that before writing the file, so judgments and rankings use the same ids.
 - **How deep to save rankings.** Ranks in the graded-documents table only go as deep as the lists you provide. MAP depends on that depth too.
-- **How deep to grade.** Ungraded results count as not relevant, so a score is only trustworthy down to the depth that has been graded. `judge.py grade` grades each run's top 10 by default (`--depth`). NDCG@10 and MRR are then sound, but MAP looks at the whole ranked list, so with rankings saved deeper than the graded depth it is mostly measuring missing grades. Grade as deep as the deepest score you report, or don't report MAP. Each time a run is added, grade its new top-k results before comparing it; the "graded" column in `validate.py` shows when a run's top k isn't fully graded.
+- **How deep to grade.** Ungraded results count as not relevant, so a score is only trustworthy down to the depth that has been graded. `judge.py grade` grades each run's top 10 by default (`--depth`), which covers NDCG@10 and MRR; for MAP, see "Why MAP needs care" above. Each time a run is added, grade its new top-k results before comparing it; the "graded" column in `validate.py` shows when a run's top k isn't fully graded.
